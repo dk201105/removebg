@@ -1,0 +1,836 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erase — Background Remover</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --cream: #f8f4ec;
+            --cream2: #f0ead8;
+            --cream3: #e8e0cc;
+            --ink: #1e1a12;
+            --ink-muted: #6e6452;
+            --ink-faint: #a8997e;
+            --c-red: #c85a44;
+            --c-amber: #c8883a;
+            --c-green: #4a9e72;
+            --c-blue: #4a7eb5;
+            --c-purple: #8a5eb5;
+            --c-pink: #c05a8a;
+            --border: rgba(30,26,18,0.13);
+            --radius: 14px;
+            --radius-lg: 20px;
+        }
+
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+            background: var(--cream);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            position: relative;
+            z-index: 10;
+            padding: 1.4rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+            header::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='4' viewBox='0 0 1200 4'%3E%3Cpath d='M0 2 Q150 0.5 300 2 Q450 3.5 600 2 Q750 0.5 900 2 Q1050 3.5 1200 2' stroke='%231e1a12' stroke-width='1.2' fill='none' opacity='0.18' stroke-dasharray='4 3'/%3E%3C/svg%3E") repeat-x center;
+            }
+
+        .logo {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--ink);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+            .logo svg {
+                width: 17px;
+                height: 17px;
+                opacity: 0.65;
+            }
+
+        .badge {
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 99px;
+            border: 1.5px solid var(--border);
+            color: var(--ink-muted);
+            background: var(--cream2);
+            letter-spacing: 0.01em;
+            transform: rotate(-0.8deg);
+            display: inline-block;
+        }
+
+        main {
+            position: relative;
+            z-index: 10;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3.5rem 2rem 3rem;
+            gap: 2.5rem;
+        }
+
+        .hero {
+            text-align: center;
+            max-width: 560px;
+            position: relative;
+        }
+
+        .doodle {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+            .doodle.d1 {
+                top: -18px;
+                left: -48px;
+                animation: float1 4s ease-in-out infinite;
+            }
+
+            .doodle.d2 {
+                top: 0;
+                right: -44px;
+                animation: float2 5s ease-in-out infinite 0.8s;
+            }
+
+            .doodle.d3 {
+                bottom: -12px;
+                left: -20px;
+                animation: float1 6s ease-in-out infinite 1.5s;
+            }
+
+            .doodle.d4 {
+                bottom: -8px;
+                right: -36px;
+                animation: float2 4.5s ease-in-out infinite 0.3s;
+            }
+
+        @keyframes float1 {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-4px) rotate(3deg);
+            }
+        }
+
+        @keyframes float2 {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-3px) rotate(-4deg);
+            }
+        }
+
+        .hero h1 {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: clamp(2.2rem, 5vw, 3.2rem);
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            color: var(--ink);
+        }
+
+            .hero h1 em {
+                font-style: italic;
+                font-weight: 400;
+            }
+
+        .squiggle-word {
+            display: inline-block;
+            position: relative;
+        }
+
+            .squiggle-word::after {
+                content: '';
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: -4px;
+                height: 6px;
+                background-repeat: no-repeat;
+                background-size: 100% 100%;
+            }
+
+        .squiggle-red::after {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cpath d='M0 6 Q12 2 25 5 Q38 8 50 4 Q62 1 75 5 Q88 8 100 4' stroke='%23c85a44' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        }
+
+        .hero p {
+            font-size: 0.95rem;
+            font-weight: 400;
+            color: var(--ink-muted);
+            line-height: 1.75;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .workspace {
+            width: 100%;
+            max-width: 860px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .drop-zone {
+            border-radius: var(--radius-lg);
+            padding: 3.5rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+            background: var(--cream2);
+            position: relative;
+            border: 1.5px dashed rgba(30,26,18,0.2);
+        }
+
+            .drop-zone:hover, .drop-zone.drag-over {
+                background: #edf3f8;
+                border-color: var(--c-blue);
+                transform: scale(1.005);
+            }
+
+            .drop-zone input[type="file"] {
+                position: absolute;
+                inset: 0;
+                opacity: 0;
+                cursor: pointer;
+                width: 100%;
+                height: 100%;
+            }
+
+        .drop-deco {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+            .drop-deco.tl {
+                top: 14px;
+                left: 18px;
+            }
+
+            .drop-deco.br {
+                bottom: 14px;
+                right: 18px;
+            }
+
+        .drop-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--cream);
+            border: 1.5px solid rgba(30,26,18,0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.2rem;
+            transform: rotate(-2deg);
+        }
+
+            .drop-icon svg {
+                width: 22px;
+                height: 22px;
+                color: var(--ink-muted);
+            }
+
+        .drop-zone h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .drop-zone p {
+            font-size: 0.875rem;
+            color: var(--ink-muted);
+        }
+
+        .drop-zone .formats {
+            margin-top: 1.1rem;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .format-pill {
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            padding: 3px 9px;
+            border-radius: 99px;
+            border: 1.5px solid rgba(30,26,18,0.13);
+            color: var(--ink-faint);
+            background: var(--cream);
+        }
+
+        .status-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 0.875rem 1.25rem;
+            background: var(--cream);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+            .status-bar.visible {
+                display: flex;
+            }
+
+            .status-bar.error {
+                background: #fdf2f0;
+                border-color: rgba(200,90,68,0.35);
+                color: var(--c-red);
+            }
+
+            .status-bar.success {
+                background: #f0f8f3;
+                border-color: rgba(74,158,114,0.35);
+                color: #2e7a52;
+            }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(30,26,18,0.1);
+            border-top-color: var(--c-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+            .status-dot.ok {
+                background: var(--c-green);
+            }
+
+            .status-dot.err {
+                background: var(--c-red);
+            }
+
+        .progress-track {
+            flex: 1;
+            height: 5px;
+            border-radius: 99px;
+            background: rgba(30,26,18,0.08);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            width: 0%;
+            background: var(--c-blue);
+            transition: width 0.3s ease;
+        }
+
+        .preview-panel {
+            display: none;
+            gap: 1rem;
+            grid-template-columns: 1fr 1fr;
+        }
+
+            .preview-panel.visible {
+                display: grid;
+            }
+
+        .preview-card {
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--cream);
+        }
+
+        .preview-label {
+            padding: 0.65rem 1rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+            letter-spacing: 0.07em;
+            color: var(--ink-faint);
+            border-bottom: 1.5px dashed rgba(30,26,18,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--cream2);
+        }
+
+        .label-swatch {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .preview-img-wrap {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 240px;
+            background: var(--cream2);
+        }
+
+        .preview-card:last-child .preview-img-wrap {
+            background-image: linear-gradient(45deg, var(--cream3) 25%, transparent 25%), linear-gradient(-45deg, var(--cream3) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--cream3) 75%), linear-gradient(-45deg, transparent 75%, var(--cream3) 75%);
+            background-size: 13px 13px;
+            background-position: 0 0, 0 6.5px, 6.5px -6.5px, -6.5px 0;
+            background-color: var(--cream2);
+        }
+
+        .preview-img-wrap img {
+            max-width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .actions {
+            display: none;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+            .actions.visible {
+                display: flex;
+            }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            font-family: 'Instrument Sans', sans-serif;
+            transition: background 0.15s, transform 0.1s;
+            text-decoration: none;
+        }
+
+            .btn:hover {
+                transform: translateY(-1px);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+        .btn-primary {
+            background: var(--ink);
+            color: var(--cream);
+            border-color: var(--ink);
+        }
+
+            .btn-primary:hover {
+                opacity: 0.85;
+            }
+
+        .btn-secondary {
+            background: var(--cream);
+            color: var(--ink);
+        }
+
+            .btn-secondary:hover {
+                background: var(--cream2);
+            }
+
+        .btn svg {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+        }
+
+        footer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 1.5rem 2rem 2rem;
+            border-top: 1px dashed rgba(30,26,18,0.12);
+            margin-top: 1rem;
+        }
+
+        .footer-note {
+            font-family: 'Caveat', cursive;
+            font-size: 1rem;
+            color: var(--ink-faint);
+        }
+
+        @media (max-width: 600px) {
+            .preview-panel {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 1.25rem 1.5rem;
+            }
+
+            main {
+                padding: 2.5rem 1.25rem;
+            }
+
+            .doodle {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a class="logo" href="#">
+            <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="2" width="14" height="14" rx="3" />
+                <path d="M6 12l3-3 3 3M9 9V5" />
+            </svg>
+            Erase
+        </a>
+        <span class="badge">runs in your browser</span>
+    </header>
+
+    <main>
+        <div class="hero">
+
+            <svg class="doodle d1" width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path d="M16 4 L17.5 13 L26 11 L19 17 L23 25 L16 20 L9 25 L13 17 L6 11 L14.5 13 Z" stroke="#c85a44" stroke-width="1.3" stroke-linejoin="round" />
+            </svg>
+
+            <svg class="doodle d2" width="26" height="26" viewBox="0 0 26 26" fill="none">
+                <circle cx="13" cy="13" r="5" stroke="#4a7eb5" stroke-width="1.3" />
+                <line x1="13" y1="3" x2="13" y2="8" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
+                <line x1="13" y1="18" x2="13" y2="23" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
+                <line x1="3" y1="13" x2="8" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
+                <line x1="18" y1="13" x2="23" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
+            </svg>
+
+            <svg class="doodle d3" width="28" height="20" viewBox="0 0 28 20" fill="none">
+                <circle cx="5" cy="6" r="2.5" stroke="#4a9e72" stroke-width="1.2" />
+                <circle cx="16" cy="10" r="1.8" stroke="#c8883a" stroke-width="1.2" />
+                <circle cx="9" cy="17" r="2" stroke="#8a5eb5" stroke-width="1.2" />
+            </svg>
+
+            <svg class="doodle d4" width="38" height="16" viewBox="0 0 38 16" fill="none">
+                <path d="M2 8 Q8 2 14 8 Q20 14 26 8 Q32 2 38 8" stroke="#c05a8a" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+
+            <h1>
+                remove the <span class="squiggle-word squiggle-red">background,</span><br>
+                <em>keep what matters</em>
+            </h1>
+            <p>A free online background remover — no sign-up, no cost.</p>
+        </div>
+
+        <div class="workspace">
+
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif">
+
+                <svg class="drop-deco tl" width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M11 2 L12.5 9 L19 7.5 L14 12 L17 19 L11 15.5 L5 19 L8 12 L3 7.5 L9.5 9 Z" stroke="#c85a44" stroke-width="1.2" stroke-linejoin="round" />
+                </svg>
+
+                <svg class="drop-deco br" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="5" stroke="#4a9e72" stroke-width="1.2" />
+                    <circle cx="10" cy="10" r="2" stroke="#4a9e72" stroke-width="1" stroke-dasharray="2 1.5" />
+                </svg>
+
+                <div class="drop-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                </div>
+                <h3>Drop an image here</h3>
+                <p>or click to browse · or paste from clipboard</p>
+                <div class="formats">
+                    <span class="format-pill">PNG</span>
+                    <span class="format-pill">JPEG</span>
+                    <span class="format-pill">WEBP</span>
+                    <span class="format-pill">GIF</span>
+                </div>
+            </div>
+
+            <div class="status-bar" id="statusBar">
+                <div class="spinner" id="spinner"></div>
+                <div class="status-dot" id="statusDot" style="display:none"></div>
+                <span id="statusText">Loading model…</span>
+                <div class="progress-track" id="progressTrack" style="display:none">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="preview-panel" id="previewPanel">
+                <div class="preview-card">
+                    <div class="preview-label">
+                        <span><span class="label-swatch" style="background:var(--c-amber)"></span>ORIGINAL</span>
+                        <span id="origSize">—</span>
+                    </div>
+                    <div class="preview-img-wrap">
+                        <img id="origImg" src="" alt="Original image">
+                    </div>
+                </div>
+                <div class="preview-card">
+                    <div class="preview-label">
+                        <span><span class="label-swatch" style="background:var(--c-green)"></span>BACKGROUND REMOVED</span>
+                        <span id="resultSize">processing…</span>
+                    </div>
+                    <div class="preview-img-wrap">
+                        <img id="resultImg" src="" alt="Background removed">
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions" id="actions">
+                <a class="btn btn-primary" id="downloadBtn" download="erased.png">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Download PNG
+                </a>
+                <button class="btn btn-secondary" id="copyBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Copy to clipboard
+                </button>
+                <button class="btn btn-secondary" id="newBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
+                    </svg>
+                    New image
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <span class="footer-note">everything stays on your device · no uploads · no tracking</span>
+    </footer>
+
+    <script type="module">
+// Use the Anthropic Claude API to remove the background by encoding the image
+// and asking Claude to return a processed version — but since Claude can't
+// output binary images, we use the @imgly/background-removal library instead,
+// loaded via dynamic import so it works in both module and non-module contexts.
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const statusBar = document.getElementById('statusBar');
+const spinner = document.getElementById('spinner');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const progressTrack = document.getElementById('progressTrack');
+const progressFill = document.getElementById('progressFill');
+const previewPanel = document.getElementById('previewPanel');
+const origImg = document.getElementById('origImg');
+const resultImg = document.getElementById('resultImg');
+const origSize = document.getElementById('origSize');
+const resultSize = document.getElementById('resultSize');
+const actions = document.getElementById('actions');
+const downloadBtn = document.getElementById('downloadBtn');
+const copyBtn = document.getElementById('copyBtn');
+const newBtn = document.getElementById('newBtn');
+
+let resultBlob = null;
+let removeBackground = null;
+
+// Load library once, reuse after
+async function ensureLib() {
+  if (removeBackground) return true;
+  try {
+    const mod = await import('https://esm.sh/@imgly/background-removal@1.4.5');
+    removeBackground = mod.removeBackground;
+    return true;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function setStatus(msg, type = 'loading') {
+  statusBar.className = 'status-bar visible' + (type !== 'loading' ? ' ' + type : '');
+  spinner.style.display = type === 'loading' ? 'block' : 'none';
+  statusDot.style.display = type !== 'loading' ? 'block' : 'none';
+  if (type !== 'loading') statusDot.className = 'status-dot ' + (type === 'success' ? 'ok' : 'err');
+  progressTrack.style.display = type === 'loading' ? 'flex' : 'none';
+  statusText.textContent = msg;
+}
+
+function setProgress(pct) {
+  progressFill.style.width = Math.min(100, Math.round(pct)) + '%';
+}
+
+async function processFile(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    setStatus('Please upload a valid image file.', 'error');
+    return;
+  }
+
+  // Reset state
+  resultBlob = null;
+  actions.className = 'actions';
+  resultImg.src = '';
+  resultSize.textContent = 'processing…';
+
+  // Show original right away
+  const origUrl = URL.createObjectURL(file);
+  origImg.src = origUrl;
+  origSize.textContent = formatBytes(file.size);
+  previewPanel.className = 'preview-panel visible';
+
+  // Load library
+  setStatus('Loading model — this may take a moment on first use…', 'loading');
+  setProgress(5);
+
+  const ok = await ensureLib();
+  if (!ok) {
+    setStatus('Could not load the library. Check your connection and refresh.', 'error');
+    return;
+  }
+
+  setStatus('Removing background…', 'loading');
+  setProgress(20);
+
+  try {
+    const blob = await removeBackground(file, {
+      debug: false,
+      progress: (key, current, total) => {
+        const pct = total > 0 ? (current / total) * 70 + 20 : 50;
+        setProgress(pct);
+        if (key === 'compute:inference') setStatus('Removing background…', 'loading');
+        else if (key.includes('fetch') || key.includes('load')) setStatus('Downloading model…', 'loading');
+        else setStatus('Processing…', 'loading');
+      },
+      model: 'medium',
+      output: { format: 'image/png', quality: 1 }
+    });
+
+    resultBlob = blob;
+    setProgress(100);
+    setStatus('Done — ' + formatBytes(blob.size), 'success');
+
+    const resultUrl = URL.createObjectURL(blob);
+    resultImg.src = resultUrl;
+    resultSize.textContent = formatBytes(blob.size);
+    downloadBtn.href = resultUrl;
+    downloadBtn.download = (file.name.replace(/\.[^.]+$/, '') || 'image') + '-no-bg.png';
+    actions.className = 'actions visible';
+
+  } catch (err) {
+    console.error('removeBackground failed:', err);
+    setStatus('Something went wrong. Try a different image or refresh.', 'error');
+  }
+}
+
+// Wire up events
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) processFile(fileInput.files[0]);
+});
+document.addEventListener('paste', e => {
+  for (const item of (e.clipboardData?.items || []))
+    if (item.type.startsWith('image/')) { processFile(item.getAsFile()); break; }
+});
+
+copyBtn.addEventListener('click', async () => {
+  if (!resultBlob) return;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': resultBlob })]);
+    const orig = copyBtn.innerHTML;
+    copyBtn.textContent = '✓ Copied';
+    setTimeout(() => { copyBtn.innerHTML = orig; }, 2000);
+  } catch {
+    copyBtn.textContent = 'Copy not supported';
+    setTimeout(() => {
+      copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy to clipboard`;
+    }, 2000);
+  }
+});
+
+newBtn.addEventListener('click', () => {
+  fileInput.value = '';
+  previewPanel.className = 'preview-panel';
+  actions.className = 'actions';
+  statusBar.className = 'status-bar';
+  origImg.src = '';
+  resultImg.src = '';
+  resultBlob = null;
+});
+
+// Kick off library load in background immediately so it's warm when the user picks a file
+ensureLib();
+    </script>
+</body>
+</html>
