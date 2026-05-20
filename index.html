@@ -1195,88 +1195,75 @@
 
 
         /**
-         * api.js — Claude API mask generation with multi-pass refinement
+         * api.js — ML background removal using Transformers.js (RMBG-1.4)
+         * Runs entirely in the browser via WebAssembly. No server, no API key.
          */
 
-        const MASK_SIZE = 96; // grid resolution; higher = more detail but more tokens
+        let _pipeline = null;
 
-        async function generateMask(imageBlob, onProgress) {
-            onProgress('Encoding image…', 10);
-            const b64 = await fileToBase64(imageBlob);
+        async function loadPipeline(onProgress) {
+            if (_pipeline) return _pipeline;
 
-            onProgress('Identifying subject…', 20);
+            const { pipeline, env } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.min.js');
 
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'claude-sonnet-4-20250514',
-                    max_tokens: 8192,
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: b64 } },
-                            {
-                                type: 'text',
-                                text: `You are an expert image segmentation system for background removal.
+            // Use CDN-hosted weights, no local caching issues
+            env.allowLocalModels = false;
 
-Analyze this image and produce a precise foreground mask.
+            onProgress('Downloading ML model (first time only)…', 8);
 
-Grid: ${MASK_SIZE}×${MASK_SIZE}, row-major, top-left → bottom-right.
-
-Segmentation rules:
-- 1 = foreground (keep), 0 = background (remove)
-- Main subject: the most prominent person, product, animal, or object
-- INCLUDE: fine hair, fur, fingers, thin limbs, transparent clothing edges
-- INCLUDE: any part of the subject even if partially obscured
-- EXCLUDE: cast shadows on the ground/background
-- EXCLUDE: reflections of the subject in mirrors or water (unless the reflection IS the subject)
-- EXCLUDE: all background elements — sky, walls, floors, furniture not held by subject
-- Be precise at boundary cells: 1 if >50% subject, 0 if >50% background
-- For soft/fuzzy edges (hair, fur, feathers): prefer 1 to preserve detail
-
-Output ONLY a flat JSON array of exactly ${MASK_SIZE * MASK_SIZE} integers (0 or 1).
-No markdown, no explanation, no other text. Just the array like: [0,1,1,0,...]`
-                            }
-                        ]
-                    }]
-                })
+            _pipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+                progress_callback: (info) => {
+                    if (info.status === 'downloading') {
+                        const pct = info.total ? (info.loaded / info.total) * 50 + 5 : 20;
+                        onProgress(`Downloading model… ${info.file || ''}`, Math.round(pct));
+                    } else if (info.status === 'loading') {
+                        onProgress('Loading model into memory…', 58);
+                    }
+                }
             });
 
-            if (!response.ok) {
-                const err = await response.text();
-                throw new Error(`API ${response.status}: ${err}`);
-            }
+            return _pipeline;
+        }
 
-            onProgress('Processing mask…', 72);
+        async function generateMask(imageBlob, onProgress) {
+            onProgress('Loading ML model…', 5);
 
-            const data = await response.json();
-            const raw = data.content.map(c => c.text || '').join('').trim()
-                .replace(/```[a-z]*\n?/g, '').replace(/```/g, '').trim();
+            const pipe = await loadPipeline(onProgress);
 
-            let parsed;
+            onProgress('Running segmentation…', 62);
+
+            // Convert blob to object URL for the pipeline
+            const url = URL.createObjectURL(imageBlob);
+
             try {
-                parsed = JSON.parse(raw);
-            } catch {
-                const m = raw.match(/\[[\d,\s]+\]/);
-                if (m) parsed = JSON.parse(m[0]);
-                else throw new Error('Could not parse mask from response');
+                const result = await pipe(url, { threshold: 0.5 });
+                URL.revokeObjectURL(url);
+
+                onProgress('Refining edges…', 82);
+
+                // result is an array of segments; the first/only one is the foreground mask
+                // The mask is an ImageData-like object with .data (Uint8ClampedArray), .width, .height
+                const seg = Array.isArray(result) ? result[0] : result;
+                const maskData = seg.mask; // { data: Uint8ClampedArray, width, height }
+
+                const mW = maskData.width;
+                const mH = maskData.height;
+
+                // Convert to Float32Array (0.0–1.0)
+                const floatMask = new Float32Array(mW * mH);
+                for (let i = 0; i < mW * mH; i++) {
+                    floatMask[i] = maskData.data[i] / 255;
+                }
+
+                // Refine edges
+                const refined = refineMaskEdges(floatMask, mW, mH);
+
+                return { mask: refined, maskW: mW, maskH: mH };
+
+            } catch (err) {
+                URL.revokeObjectURL(url);
+                throw err;
             }
-
-            if (!Array.isArray(parsed) || parsed.length < MASK_SIZE * MASK_SIZE) {
-                throw new Error(`Mask length mismatch: got ${parsed?.length}, need ${MASK_SIZE * MASK_SIZE}`);
-            }
-
-            onProgress('Refining edges…', 82);
-
-            // Convert to float
-            const floatMask = new Float32Array(MASK_SIZE * MASK_SIZE);
-            for (let i = 0; i < MASK_SIZE * MASK_SIZE; i++) floatMask[i] = parsed[i] ? 1.0 : 0.0;
-
-            // Multi-pass edge refinement
-            const refined = refineMaskEdges(floatMask, MASK_SIZE, MASK_SIZE);
-
-            return { mask: refined, maskW: MASK_SIZE, maskH: MASK_SIZE };
         }
 
 
