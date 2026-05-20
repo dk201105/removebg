@@ -32,7 +32,7 @@
         }
 
         body {
-            font-family: 'Instrument Sans', sans-serif;
+            font-family: 'Instrument Sans',sans-serif;
             background: var(--cream);
             color: var(--ink);
             min-height: 100vh;
@@ -157,7 +157,7 @@
         }
 
         .hero h1 {
-            font-size: clamp(2.2rem, 5vw, 3.2rem);
+            font-size: clamp(2.2rem,5vw,3.2rem);
             font-weight: 600;
             line-height: 1.15;
             letter-spacing: -0.03em;
@@ -205,15 +205,19 @@
             gap: 1.25rem;
         }
 
+        /* FIX 3: Drop zone — full hit target */
         .drop-zone {
             border-radius: var(--radius-lg);
             padding: 3.5rem 2rem;
             text-align: center;
             cursor: pointer;
-            transition: background 0.2s, transform 0.15s;
+            transition: background 0.2s,transform 0.15s;
             background: var(--cream2);
             position: relative;
             border: 1.5px dashed rgba(30,26,18,0.2);
+            /* Ensure the entire zone is interactive */
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
 
             .drop-zone:hover, .drop-zone.drag-over {
@@ -229,6 +233,13 @@
                 cursor: pointer;
                 width: 100%;
                 height: 100%;
+                /* FIX 3: Ensure pointer events work across full area on mobile */
+                font-size: 0; /* Prevents zoom on iOS */
+                -webkit-appearance: none;
+            }
+            /* FIX 3: All child elements must not capture events above the input */
+            .drop-zone > *:not(input) {
+                pointer-events: none;
             }
 
         .drop-deco {
@@ -419,9 +430,9 @@
         }
 
             .preview-img-wrap.checkerboard {
-                background-image: linear-gradient(45deg, var(--cream3) 25%, transparent 25%), linear-gradient(-45deg, var(--cream3) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--cream3) 75%), linear-gradient(-45deg, transparent 75%, var(--cream3) 75%);
+                background-image: linear-gradient(45deg,var(--cream3) 25%,transparent 25%),linear-gradient(-45deg,var(--cream3) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--cream3) 75%),linear-gradient(-45deg,transparent 75%,var(--cream3) 75%);
                 background-size: 13px 13px;
-                background-position: 0 0, 0 6.5px, 6.5px -6.5px, -6.5px 0;
+                background-position: 0 0,0 6.5px,6.5px -6.5px,-6.5px 0;
                 background-color: var(--cream2);
             }
 
@@ -452,8 +463,8 @@
             font-weight: 500;
             cursor: pointer;
             border: 1.5px solid var(--border);
-            font-family: 'Instrument Sans', sans-serif;
-            transition: background 0.15s, transform 0.1s;
+            font-family: 'Instrument Sans',sans-serif;
+            transition: background 0.15s,transform 0.1s;
             text-decoration: none;
         }
 
@@ -581,8 +592,8 @@
             border: 1.5px solid var(--border);
             background: var(--cream);
             color: var(--ink-muted);
-            font-family: 'Instrument Sans', sans-serif;
-            transition: background 0.12s, border-color 0.12s, color 0.12s;
+            font-family: 'Instrument Sans',sans-serif;
+            transition: background 0.12s,border-color 0.12s,color 0.12s;
         }
 
             .mode-btn svg {
@@ -652,9 +663,9 @@
             display: flex;
             justify-content: center;
             padding: 1rem 1.5rem;
-            background-image: linear-gradient(45deg, var(--cream3) 25%, transparent 25%), linear-gradient(-45deg, var(--cream3) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--cream3) 75%), linear-gradient(-45deg, transparent 75%, var(--cream3) 75%);
+            background-image: linear-gradient(45deg,var(--cream3) 25%,transparent 25%),linear-gradient(-45deg,var(--cream3) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--cream3) 75%),linear-gradient(-45deg,transparent 75%,var(--cream3) 75%);
             background-size: 10px 10px;
-            background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+            background-position: 0 0,0 5px,5px -5px,-5px 0;
             background-color: var(--cream2);
         }
 
@@ -677,7 +688,7 @@
         .editor-tip {
             padding: 0.7rem 1.5rem;
             color: var(--ink-faint);
-            font-family: 'Caveat', cursive;
+            font-family: 'Caveat',cursive;
             font-size: 0.95rem;
             border-top: 1px dashed rgba(30,26,18,0.08);
         }
@@ -693,13 +704,13 @@
         }
 
             .brush-cursor.erase {
-                border-color: rgba(200, 60, 40, 0.8);
-                background: rgba(200, 60, 40, 0.08);
+                border-color: rgba(200,60,40,0.8);
+                background: rgba(200,60,40,0.08);
             }
 
             .brush-cursor.restore {
-                border-color: rgba(40, 160, 80, 0.8);
-                background: rgba(40, 160, 80, 0.08);
+                border-color: rgba(40,160,80,0.8);
+                background: rgba(40,160,80,0.08);
             }
 
         footer {
@@ -712,19 +723,12 @@
         }
 
         .footer-note {
-            font-family: 'Caveat', cursive;
+            font-family: 'Caveat',cursive;
             font-size: 1rem;
             color: var(--ink-faint);
         }
-        /* Model info banner */
-        .model-info {
-            font-size: 0.78rem;
-            color: var(--ink-faint);
-            text-align: center;
-            padding: 0.5rem;
-        }
 
-        @media (max-width: 640px) {
+        @media (max-width:640px) {
             .preview-panel {
                 grid-template-columns: 1fr;
             }
@@ -757,7 +761,6 @@
 </head>
 <body>
     <div id="brushCursor" class="brush-cursor erase" style="display:none"></div>
-
     <header>
         <a class="logo" href="#">
             <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -768,47 +771,23 @@
         </a>
         <span class="badge">free background remover</span>
     </header>
-
     <main>
         <div class="hero">
-            <svg class="doodle d1" width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <path d="M16 4 L17.5 13 L26 11 L19 17 L23 25 L16 20 L9 25 L13 17 L6 11 L14.5 13 Z" stroke="#c85a44" stroke-width="1.3" stroke-linejoin="round" />
-            </svg>
-            <svg class="doodle d2" width="26" height="26" viewBox="0 0 26 26" fill="none">
-                <circle cx="13" cy="13" r="5" stroke="#4a7eb5" stroke-width="1.3" />
-                <line x1="13" y1="3" x2="13" y2="8" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
-                <line x1="13" y1="18" x2="13" y2="23" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
-                <line x1="3" y1="13" x2="8" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
-                <line x1="18" y1="13" x2="23" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" />
-            </svg>
-            <svg class="doodle d3" width="28" height="20" viewBox="0 0 28 20" fill="none">
-                <circle cx="5" cy="6" r="2.5" stroke="#4a9e72" stroke-width="1.2" />
-                <circle cx="16" cy="10" r="1.8" stroke="#c8883a" stroke-width="1.2" />
-                <circle cx="9" cy="17" r="2" stroke="#8a5eb5" stroke-width="1.2" />
-            </svg>
-            <svg class="doodle d4" width="38" height="16" viewBox="0 0 38 16" fill="none">
-                <path d="M2 8 Q8 2 14 8 Q20 14 26 8 Q32 2 38 8" stroke="#c05a8a" stroke-width="1.3" stroke-linecap="round" />
-            </svg>
+            <svg class="doodle d1" width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M16 4 L17.5 13 L26 11 L19 17 L23 25 L16 20 L9 25 L13 17 L6 11 L14.5 13 Z" stroke="#c85a44" stroke-width="1.3" stroke-linejoin="round" /></svg>
+            <svg class="doodle d2" width="26" height="26" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="5" stroke="#4a7eb5" stroke-width="1.3" /><line x1="13" y1="3" x2="13" y2="8" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" /><line x1="13" y1="18" x2="13" y2="23" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" /><line x1="3" y1="13" x2="8" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" /><line x1="18" y1="13" x2="23" y2="13" stroke="#4a7eb5" stroke-width="1" stroke-linecap="round" /></svg>
+            <svg class="doodle d3" width="28" height="20" viewBox="0 0 28 20" fill="none"><circle cx="5" cy="6" r="2.5" stroke="#4a9e72" stroke-width="1.2" /><circle cx="16" cy="10" r="1.8" stroke="#c8883a" stroke-width="1.2" /><circle cx="9" cy="17" r="2" stroke="#8a5eb5" stroke-width="1.2" /></svg>
+            <svg class="doodle d4" width="38" height="16" viewBox="0 0 38 16" fill="none"><path d="M2 8 Q8 2 14 8 Q20 14 26 8 Q32 2 38 8" stroke="#c05a8a" stroke-width="1.3" stroke-linecap="round" /></svg>
             <h1>remove the <span class="squiggle-word squiggle-red">background,</span><br><em>keep what matters</em></h1>
             <p>A free online background remover — no sign-up, no cost.</p>
         </div>
-
         <div class="workspace">
-            <div class="drop-zone" id="dropZone">
+            <!-- FIX 3: Drop zone restructured so the input IS the entire zone -->
+            <label class="drop-zone" id="dropZone">
                 <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp,image/gif">
-                <svg class="drop-deco tl" width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <path d="M11 2 L12.5 9 L19 7.5 L14 12 L17 19 L11 15.5 L5 19 L8 12 L3 7.5 L9.5 9 Z" stroke="#c85a44" stroke-width="1.2" stroke-linejoin="round" />
-                </svg>
-                <svg class="drop-deco br" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="5" stroke="#4a9e72" stroke-width="1.2" />
-                    <circle cx="10" cy="10" r="2" stroke="#4a9e72" stroke-width="1" stroke-dasharray="2 1.5" />
-                </svg>
+                <svg class="drop-deco tl" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2 L12.5 9 L19 7.5 L14 12 L17 19 L11 15.5 L5 19 L8 12 L3 7.5 L9.5 9 Z" stroke="#c85a44" stroke-width="1.2" stroke-linejoin="round" /></svg>
+                <svg class="drop-deco br" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="5" stroke="#4a9e72" stroke-width="1.2" /><circle cx="10" cy="10" r="2" stroke="#4a9e72" stroke-width="1" stroke-dasharray="2 1.5" /></svg>
                 <div class="drop-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
                 </div>
                 <h3>Drop an image here</h3>
                 <p>or click to browse · or paste from clipboard</p>
@@ -818,8 +797,7 @@
                     <span class="format-pill">WEBP</span>
                     <span class="format-pill">GIF</span>
                 </div>
-            </div>
-
+            </label>
             <div class="status-bar" id="statusBar">
                 <div class="spinner" id="spinner"></div>
                 <div class="status-dot" id="statusDot" style="display:none"></div>
@@ -828,67 +806,38 @@
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
-
             <div class="preview-panel" id="previewPanel">
                 <div class="preview-card">
-                    <div class="preview-label">
-                        <span><span class="label-swatch" style="background:var(--c-amber)"></span>ORIGINAL</span>
-                        <span id="origSize">—</span>
-                    </div>
-                    <div class="preview-img-wrap">
-                        <img id="origImg" src="" alt="Original">
-                    </div>
+                    <div class="preview-label"><span><span class="label-swatch" style="background:var(--c-amber)"></span>ORIGINAL</span><span id="origSize">—</span></div>
+                    <div class="preview-img-wrap"><img id="origImg" src="" alt="Original"></div>
                 </div>
                 <div class="preview-card">
-                    <div class="preview-label">
-                        <span><span class="label-swatch" style="background:var(--c-green)"></span>BACKGROUND REMOVED</span>
-                        <span id="resultSize">processing…</span>
-                    </div>
-                    <div class="preview-img-wrap checkerboard">
-                        <img id="resultImg" src="" alt="Result">
-                    </div>
+                    <div class="preview-label"><span><span class="label-swatch" style="background:var(--c-green)"></span>BACKGROUND REMOVED</span><span id="resultSize">processing…</span></div>
+                    <div class="preview-img-wrap checkerboard"><img id="resultImg" src="" alt="Result"></div>
                 </div>
             </div>
-
             <div class="actions" id="actions">
                 <a class="btn btn-primary" id="downloadBtn" download="erased.png">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                     Download PNG
                 </a>
                 <button class="btn btn-secondary" id="copyBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" />
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
                     Copy to clipboard
                 </button>
                 <button class="btn btn-secondary" id="editToggleBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
                     Edit with brush
                 </button>
                 <button class="btn btn-secondary" id="newBtn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="1 4 1 10 7 10" />
-                        <path d="M3.51 15a9 9 0 1 0 .49-3.51" />
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" /></svg>
                     New image
                 </button>
             </div>
-
             <div class="editor-panel" id="editorPanel" style="display:none">
                 <div class="editor-header">
                     <div class="editor-title">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
                         Brush editor
                     </div>
                     <p class="editor-hint">Paint over areas you want to <span class="hint-erase">erase</span> or <span class="hint-restore">restore</span>. Changes preview live.</p>
@@ -898,18 +847,11 @@
                         <span class="tool-label">Mode</span>
                         <div class="mode-buttons">
                             <button class="mode-btn active" id="eraseBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20 20H7L3 16l10-10 7 7-2.5 2.5" />
-                                    <path d="M6.0 11.0 l7 7" />
-                                </svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l10-10 7 7-2.5 2.5" /><path d="M6.0 11.0 l7 7" /></svg>
                                 Erase
                             </button>
                             <button class="mode-btn" id="restoreBtn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10" />
-                                    <polyline points="12 6 12 12 16 14" />
-                                    <path d="M20 21v-6h-6" />
-                                </svg>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10" /><polyline points="12 6 12 12 16 14" /><path d="M20 21v-6h-6" /></svg>
                                 Restore
                             </button>
                         </div>
@@ -935,15 +877,22 @@
             </div>
         </div>
     </main>
-
     <footer>
         <span class="footer-note">everything stays on your device · no uploads · no tracking</span>
     </footer>
 
     <script type="module">
-        // ── canvas helpers ──────────────────────────────────────────────────────────
+        // ── Device detection ─────────────────────────────────────────────────────────
+        // FIX 1: Detect mobile for performance tuning
+        const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ||
+            (navigator.maxTouchPoints > 1 && window.innerWidth <= 768);
 
-        function resizeImageFile(file, maxDim = 1024) {
+        // FIX 1: Lower resolution on mobile to speed up ML inference significantly
+        const MAX_DIM = isMobile ? 512 : 1024;
+
+        // ── Canvas helpers ───────────────────────────────────────────────────────────
+
+        function resizeImageFile(file, maxDim) {
             return new Promise((resolve) => {
                 const img = new Image();
                 const url = URL.createObjectURL(file);
@@ -955,7 +904,8 @@
                     const c = document.createElement('canvas');
                     c.width = w; c.height = h;
                     c.getContext('2d').drawImage(img, 0, 0, w, h);
-                    c.toBlob(resolve, 'image/jpeg', 0.92);
+                    // FIX 1: Lower JPEG quality on mobile to reduce blob size → faster transfer
+                    c.toBlob(resolve, 'image/jpeg', isMobile ? 0.80 : 0.92);
                 };
                 img.src = url;
             });
@@ -999,6 +949,7 @@
         }
 
         function refineMaskEdges(mask, w, h) {
+            if (isMobile) return mask;
             let refined = blurMask(mask, w, h, 1.5);
             for (let i = 0; i < refined.length; i++) {
                 const v = refined[i];
@@ -1067,14 +1018,15 @@
                         for (let x = 0; x < img.width; x++) {
                             const fx = (x / img.width) * (maskW - 1);
                             const fy = (y / img.height) * (maskH - 1);
+                            // Read from the (potentially already-edited) working mask
                             let alpha = sampleMask(floatMask, maskW, maskH, fx, fy);
                             const bx = Math.round((x / img.width) * (bW - 1));
                             const by = Math.round((y / img.height) * (bH - 1));
                             const bi = (by * bW + bx) * 4;
                             const bR = bd[bi], bG = bd[bi + 1], bA = bd[bi + 3] / 255;
                             if (bA > 0.01) {
-                                if (bR > bG) { alpha = alpha * (1 - bA); }
-                                else { alpha = alpha + (1 - alpha) * bA; }
+                                if (bR > bG) { alpha = alpha * (1 - bA); }   // erase = red channel
+                                else { alpha = alpha + (1 - alpha) * bA; } // restore = green
                             }
                             d[(y * img.width + x) * 4 + 3] = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
                         }
@@ -1084,6 +1036,26 @@
                 };
                 img.src = url;
             });
+        }
+
+        function bakeBrushIntoMask(floatMask, maskW, maskH, brushCanvas) {
+            const baked = new Float32Array(floatMask);
+            const bd = brushCanvas.getContext('2d').getImageData(0, 0, brushCanvas.width, brushCanvas.height).data;
+            const bW = brushCanvas.width;
+            const bH = brushCanvas.height;
+            for (let i = 0; i < maskW * maskH; i++) {
+                const mx = i % maskW;
+                const my = Math.floor(i / maskW);
+                const bx = Math.round((mx / (maskW - 1)) * (bW - 1));
+                const by = Math.round((my / (maskH - 1)) * (bH - 1));
+                const bi = (by * bW + bx) * 4;
+                const bR = bd[bi], bG = bd[bi + 1], bA = bd[bi + 3] / 255;
+                if (bA > 0.01) {
+                    if (bR > bG) { baked[i] = baked[i] * (1 - bA); }
+                    else { baked[i] = baked[i] + (1 - baked[i]) * bA; }
+                }
+            }
+            return baked;
         }
 
         function compositeEditorPreview(editorCanvas, brushCanvas, resultImg) {
@@ -1104,27 +1076,19 @@
             ctx.restore();
         }
 
-        // ── ML pipeline ─────────────────────────────────────────────────────────────
-        // FIX: Use transformers@3.5.0 which supports SegformerForSemanticSegmentation,
-        //      and use the correct pipeline task name for RMBG-1.4
+        // ── ML pipeline ──────────────────────────────────────────────────────────────
 
         let _pipeline = null;
 
         async function loadPipeline(onProgress) {
             if (_pipeline) return _pipeline;
-
             const { pipeline, env } = await import(
                 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js'
             );
-
             env.allowLocalModels = false;
-            // Disable custom ops check that can cause issues in some browsers
-            env.backends = { onnx: { wasm: { numThreads: 1 } } };
-
+            // FIX 1: Single thread on mobile avoids scheduler overhead
+            env.backends = { onnx: { wasm: { numThreads: isMobile ? 1 : 2 } } };
             onProgress('Downloading ML model (first time only)…', 8);
-
-            // RMBG-1.4 requires the 'image-segmentation' task with a specific
-            // dtype and device setting for browser WASM inference.
             _pipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
                 dtype: 'fp32',
                 device: 'wasm',
@@ -1137,7 +1101,6 @@
                     }
                 }
             });
-
             return _pipeline;
         }
 
@@ -1145,26 +1108,20 @@
             onProgress('Loading ML model…', 5);
             const pipe = await loadPipeline(onProgress);
             onProgress('Running segmentation…', 62);
-
             const url = URL.createObjectURL(imageBlob);
             try {
                 const result = await pipe(url, { threshold: 0.5 });
                 URL.revokeObjectURL(url);
                 onProgress('Refining edges…', 82);
-
-                // Normalise the varied shapes the pipeline can return
                 let maskData;
                 if (Array.isArray(result)) {
-                    // [{label, score, mask: {data, width, height}}, ...]
                     const seg = result[0];
                     maskData = seg.mask ?? seg;
                 } else if (result && result.mask) {
                     maskData = result.mask;
                 } else {
-                    // Raw {data, width, height}
                     maskData = result;
                 }
-
                 const mW = maskData.width;
                 const mH = maskData.height;
                 const floatMask = new Float32Array(mW * mH);
@@ -1179,7 +1136,7 @@
             }
         }
 
-        // ── UI helpers ──────────────────────────────────────────────────────────────
+        // ── UI helpers ───────────────────────────────────────────────────────────────
 
         function formatBytes(b) {
             if (b < 1024) return b + ' B';
@@ -1228,7 +1185,7 @@
             hideEditor();
         }
 
-        // ── Editor ──────────────────────────────────────────────────────────────────
+        // ── Editor ───────────────────────────────────────────────────────────────────
 
         let _editorResultImg = null;
 
@@ -1239,7 +1196,8 @@
             const brushCanvas = document.getElementById('brushCanvas');
             _editorResultImg = new Image();
             _editorResultImg.onload = () => {
-                const maxW = Math.min(740, _editorResultImg.width);
+                // FIX 1: Smaller canvas on mobile = much faster composite draws
+                const maxW = Math.min(isMobile ? 420 : 740, _editorResultImg.width);
                 const scale = maxW / _editorResultImg.width;
                 const cW = Math.round(_editorResultImg.width * scale);
                 const cH = Math.round(_editorResultImg.height * scale);
@@ -1272,7 +1230,7 @@
             _editorResultImg.src = URL.createObjectURL(newBlob);
         }
 
-        // ── Brush ───────────────────────────────────────────────────────────────────
+        // ── Brush ────────────────────────────────────────────────────────────────────
 
         const Brush = { mode: 'erase', size: 28, hardness: 0.5, painting: false, lastX: null, lastY: null };
         let _onStroke = null, _brushCanvas = null, _editorCanvas = null, _cursorEl = null;
@@ -1357,13 +1315,13 @@
             const edgeAlpha = Brush.hardness > 0.8 ? centerAlpha * 0.6 : 0;
             const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
             if (Brush.mode === 'erase') {
-                grad.addColorStop(0, `rgba(220, 50, 30, ${centerAlpha})`);
-                grad.addColorStop(midpoint, `rgba(220, 50, 30, ${centerAlpha * 0.5})`);
-                grad.addColorStop(1, `rgba(220, 50, 30, ${edgeAlpha})`);
+                grad.addColorStop(0, `rgba(220,50,30,${centerAlpha})`);
+                grad.addColorStop(midpoint, `rgba(220,50,30,${centerAlpha * 0.5})`);
+                grad.addColorStop(1, `rgba(220,50,30,${edgeAlpha})`);
             } else {
-                grad.addColorStop(0, `rgba(40, 200, 100, ${centerAlpha})`);
-                grad.addColorStop(midpoint, `rgba(40, 200, 100, ${centerAlpha * 0.5})`);
-                grad.addColorStop(1, `rgba(40, 200, 100, ${edgeAlpha})`);
+                grad.addColorStop(0, `rgba(40,200,100,${centerAlpha})`);
+                grad.addColorStop(midpoint, `rgba(40,200,100,${centerAlpha * 0.5})`);
+                grad.addColorStop(1, `rgba(40,200,100,${edgeAlpha})`);
             }
             ctx.globalCompositeOperation = 'source-over';
             ctx.fillStyle = grad;
@@ -1372,8 +1330,6 @@
             ctx.fill();
         }
         function getBrushCanvas() { return _brushCanvas; }
-
-        // ── App controller ──────────────────────────────────────────────────────────
 
         const App = { originalFile: null, currentMask: null, maskW: 0, maskH: 0, resultBlob: null, filename: 'image' };
 
@@ -1387,10 +1343,19 @@
         function bindDropZone() {
             const zone = document.getElementById('dropZone');
             const input = document.getElementById('fileInput');
+
             zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
             zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-            zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
-            input.addEventListener('change', () => { if (input.files[0]) handleFile(input.files[0]); });
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+            });
+
+            input.addEventListener('change', () => {
+                if (input.files[0]) handleFile(input.files[0]);
+            });
+
             document.addEventListener('paste', e => {
                 for (const item of (e.clipboardData?.items || []))
                     if (item.type.startsWith('image/')) { handleFile(item.getAsFile()); break; }
@@ -1403,8 +1368,10 @@
             resetUI();
             showOriginal(file);
             try {
-                const resized = await resizeImageFile(file, 1024);
+                // FIX 1: Use device-appropriate max dimension
+                const resized = await resizeImageFile(file, MAX_DIM);
                 const { mask, maskW, maskH } = await generateMask(resized, (msg, pct) => { setStatus(msg, 'loading'); setProgress(pct); });
+                // FIX 2: Store the base mask as the working mask
                 App.currentMask = mask;
                 App.maskW = maskW;
                 App.maskH = maskH;
@@ -1428,6 +1395,7 @@
             _previewTimer = setTimeout(async () => {
                 if (!App.originalFile || !App.currentMask) return;
                 const brushCanvas = getBrushCanvas();
+                // FIX 2: Export using current working mask (not the original)
                 const blob = await exportWithBrushEdits(App.originalFile, App.currentMask, App.maskW, App.maskH, brushCanvas);
                 App.resultBlob = blob;
                 showResult(blob, App.filename);
@@ -1444,9 +1412,18 @@
                     applyBtn.textContent = 'Applying…';
                     applyBtn.disabled = true;
                     const brushCanvas = getBrushCanvas();
-                    const blob = await exportWithBrushEdits(App.originalFile, App.currentMask, App.maskW, App.maskH, brushCanvas);
-                    App.resultBlob = blob;
+
+                    // FIX 2: Bake the current brush strokes INTO the working mask BEFORE
+                    // clearing the brush canvas. This means the next stroke session starts
+                    // from the already-edited state, not the original ML mask.
+                    const bakedMask = bakeBrushIntoMask(App.currentMask, App.maskW, App.maskH, brushCanvas);
+                    App.currentMask = bakedMask; // <── persist the cumulative edits
+
                     brushCanvas.getContext('2d').clearRect(0, 0, brushCanvas.width, brushCanvas.height);
+
+                    // Re-export using the freshly baked mask (brush canvas is now empty)
+                    const blob = await applyMaskToImage(App.originalFile, App.currentMask, App.maskW, App.maskH);
+                    App.resultBlob = blob;
                     showResult(blob, App.filename);
                     updateEditorResult(blob);
                     applyBtn.textContent = 'Apply edits';
