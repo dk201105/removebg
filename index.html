@@ -6,6 +6,10 @@
     <title>Erase — Background Remover</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -890,7 +894,7 @@
         // FIX 1: Lower resolution on mobile to speed up ML inference significantly
         const MAX_DIM = isMobile ? 512 : 1024;
 
-        // ── Canvas helpers ───────────────────────────────────────────────────────────
+        // ── Canvas helpers ─────────────────────��─────────────────────────────────────
 
         function resizeImageFile(file, maxDim) {
             return new Promise((resolve) => {
