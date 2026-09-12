@@ -706,6 +706,63 @@
                 opacity: 0.7;
             }
 
+        /* Quality Strip & Toggle */
+        .quality-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .quality-label {
+            font-size: 0.73rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+        }
+
+        .quality-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: var(--cream2);
+            padding: 3px;
+            border-radius: 99px;
+            border: 1.5px solid var(--border);
+        }
+
+        .quality-btn {
+            border: none;
+            background: transparent;
+            padding: 4px 11px;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: 'Instrument Sans', sans-serif;
+            color: var(--ink-muted);
+            transition: background 0.12s, color 0.12s;
+        }
+
+            .quality-btn:hover {
+                color: var(--ink);
+            }
+
+            .quality-btn.active {
+                background: var(--ink);
+                color: var(--cream);
+                font-weight: 600;
+            }
+
+        .quality-note {
+            font-family: 'Caveat', cursive;
+            font-size: 1rem;
+            color: var(--ink-faint);
+        }
+
         .preview-panel {
             display: none;
             gap: 1rem;
@@ -1122,6 +1179,14 @@
             <svg class="doodle d4" width="38" height="16" viewBox="0 0 38 16" fill="none"><path d="M2 8 Q8 2 14 8 Q20 14 26 8 Q32 2 38 8" stroke="#c05a8a" stroke-width="1.3" stroke-linecap="round" /></svg>
             <h1>remove the <span class="squiggle-word squiggle-red">background,</span><br><em>keep what matters</em></h1>
             <p>A free online background remover with batch support — no sign-up, no cost.</p>
+            <div class="quality-strip" id="qualityStrip">
+                <span class="quality-label">Quality</span>
+                <div class="quality-toggle">
+                    <button class="quality-btn active" data-quality="ultra" id="qualityUltraBtn" type="button" title="Native 1024px + Edge Anti-aliasing + Halo Removal">✨ Ultra HD</button>
+                    <button class="quality-btn" data-quality="fast" id="qualityFastBtn" type="button" title="Fast processing for quick drafts">⚡ Fast</button>
+                </div>
+                <span class="quality-note" id="qualityNote">1024px · Crisp edges · Halo removal</span>
+            </div>
         </div>
         <div class="workspace">
             <!-- Batch Toolbar -->
@@ -1272,7 +1337,9 @@
             (navigator.maxTouchPoints > 1 && window.innerWidth <= 768);
 
         // FIX 1: Lower resolution on mobile to speed up ML inference significantly
-        const MAX_DIM = isMobile ? 512 : 1024;
+        function getMaxDimension() {
+            return App.quality === 'fast' ? (isMobile ? 512 : 768) : 1024;
+        }
 
         // ── Canvas helpers ───────────────────────────────────────────────────────────
 
@@ -1288,59 +1355,72 @@
                     const c = document.createElement('canvas');
                     c.width = w; c.height = h;
                     c.getContext('2d').drawImage(img, 0, 0, w, h);
-                    // FIX 1: Lower JPEG quality on mobile to reduce blob size → faster transfer
-                    c.toBlob(resolve, 'image/jpeg', isMobile ? 0.80 : 0.92);
+                    // Lossless PNG preserves sharp details and eliminates JPEG 8x8 DCT edge artifacts
+                    c.toBlob(resolve, 'image/png');
                 };
                 img.src = url;
             });
         }
 
-        function blurMask(mask, w, h, radius = 2) {
-            const temp = new Float32Array(mask.length);
-            const out = new Float32Array(mask.length);
-            const sigma = radius / 2;
-            const kSize = Math.ceil(radius * 2) + 1;
-            const kernel = [];
-            let kSum = 0;
-            for (let i = 0; i < kSize; i++) {
-                const x = i - Math.floor(kSize / 2);
-                const v = Math.exp(-(x * x) / (2 * sigma * sigma));
-                kernel.push(v); kSum += v;
-            }
-            for (let i = 0; i < kSize; i++) kernel[i] /= kSum;
-            const half = Math.floor(kSize / 2);
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    let s = 0;
-                    for (let k = 0; k < kSize; k++) {
-                        const nx = Math.max(0, Math.min(w - 1, x + k - half));
-                        s += mask[y * w + nx] * kernel[k];
-                    }
-                    temp[y * w + x] = s;
+        function refineMaskEdges(mask, w, h) {
+            if (App.quality === 'fast') return mask;
+            const refined = new Float32Array(mask.length);
+            // Smoothstep S-curve provides crisp sub-pixel anti-aliasing without blur halos
+            for (let i = 0; i < mask.length; i++) {
+                const v = mask[i];
+                if (v <= 0.02) {
+                    refined[i] = 0;
+                } else if (v >= 0.98) {
+                    refined[i] = 1;
+                } else {
+                    refined[i] = v * v * (3 - 2 * v);
                 }
             }
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    let s = 0;
-                    for (let k = 0; k < kSize; k++) {
-                        const ny = Math.max(0, Math.min(h - 1, y + k - half));
-                        s += temp[ny * w + x] * kernel[k];
-                    }
-                    out[y * w + x] = s;
-                }
-            }
-            return out;
+            return refined;
         }
 
-        function refineMaskEdges(mask, w, h) {
-            if (isMobile) return mask;
-            let refined = blurMask(mask, w, h, 1.5);
-            for (let i = 0; i < refined.length; i++) {
-                const v = refined[i];
-                refined[i] = v < 0.1 ? v * 0.4 : v > 0.9 ? 1 - (1 - v) * 0.4 : v;
+        function decontaminateEdges(data, width, height) {
+            const w = width, h = height;
+            const ref = new Uint8ClampedArray(data);
+            const radius = 2;
+
+            for (let y = 1; y < h - 1; y++) {
+                const yOff = y * w;
+                for (let x = 1; x < w - 1; x++) {
+                    const idx = (yOff + x) * 4;
+                    const a = data[idx + 3];
+                    // Only process semi-transparent edge pixels
+                    if (a > 5 && a < 240) {
+                        let bestR = data[idx], bestG = data[idx + 1], bestB = data[idx + 2];
+                        let found = false;
+
+                        for (let dy = -radius; dy <= radius && !found; dy++) {
+                            const ny = y + dy;
+                            if (ny < 0 || ny >= h) continue;
+                            const nyOff = ny * w;
+                            for (let dx = -radius; dx <= radius; dx++) {
+                                const nx = x + dx;
+                                if (nx < 0 || nx >= w || (dx === 0 && dy === 0)) continue;
+                                const nIdx = (nyOff + nx) * 4;
+                                if (ref[nIdx + 3] >= 245) {
+                                    bestR = ref[nIdx];
+                                    bestG = ref[nIdx + 1];
+                                    bestB = ref[nIdx + 2];
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (found) {
+                            const t = (1 - (a / 255)) * 0.75;
+                            data[idx] = Math.round(data[idx] * (1 - t) + bestR * t);
+                            data[idx + 1] = Math.round(data[idx + 1] * (1 - t) + bestG * t);
+                            data[idx + 2] = Math.round(data[idx + 2] * (1 - t) + bestB * t);
+                        }
+                    }
+                }
             }
-            refined = blurMask(refined, w, h, 2);
-            return refined;
         }
 
         function sampleMask(mask, maskW, maskH, fx, fy) {
@@ -1376,6 +1456,9 @@
                             d[(y * img.width + x) * 4 + 3] = Math.round(Math.max(0, Math.min(1, v)) * 255);
                         }
                     }
+                    if (App.quality === 'ultra') {
+                        decontaminateEdges(d, img.width, img.height);
+                    }
                     ctx.putImageData(id, 0, 0);
                     c.toBlob(resolve, 'image/png');
                 };
@@ -1402,18 +1485,20 @@
                         for (let x = 0; x < img.width; x++) {
                             const fx = (x / img.width) * (maskW - 1);
                             const fy = (y / img.height) * (maskH - 1);
-                            // Read from the (potentially already-edited) working mask
                             let alpha = sampleMask(floatMask, maskW, maskH, fx, fy);
                             const bx = Math.round((x / img.width) * (bW - 1));
                             const by = Math.round((y / img.height) * (bH - 1));
                             const bi = (by * bW + bx) * 4;
                             const bR = bd[bi], bG = bd[bi + 1], bA = bd[bi + 3] / 255;
                             if (bA > 0.01) {
-                                if (bR > bG) { alpha = alpha * (1 - bA); }   // erase = red channel
-                                else { alpha = alpha + (1 - alpha) * bA; } // restore = green
+                                if (bR > bG) { alpha = alpha * (1 - bA); }
+                                else { alpha = alpha + (1 - alpha) * bA; }
                             }
                             d[(y * img.width + x) * 4 + 3] = Math.round(Math.max(0, Math.min(1, alpha)) * 255);
                         }
+                    }
+                    if (App.quality === 'ultra') {
+                        decontaminateEdges(d, img.width, img.height);
                     }
                     ctx.putImageData(id, 0, 0);
                     c.toBlob(resolve, 'image/png');
@@ -1463,6 +1548,7 @@
         // ── ML pipeline ──────────────────────────────────────────────────────────────
 
         let _pipeline = null;
+        let _deviceBackend = 'wasm';
 
         async function loadPipeline(onProgress) {
             if (_pipeline) return _pipeline;
@@ -1470,21 +1556,64 @@
                 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.0/dist/transformers.min.js'
             );
             env.allowLocalModels = false;
-            // FIX 1: Single thread on mobile avoids scheduler overhead
-            env.backends = { onnx: { wasm: { numThreads: isMobile ? 1 : 2 } } };
-            onProgress('Downloading ML model (first time only)…', 8);
-            _pipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
-                dtype: 'fp32',
-                device: 'wasm',
-                progress_callback: (info) => {
-                    if (info.status === 'downloading') {
-                        const pct = info.total ? (info.loaded / info.total) * 50 + 5 : 20;
-                        onProgress(`Downloading model… ${info.file || ''}`, Math.round(pct));
-                    } else if (info.status === 'loading') {
-                        onProgress('Loading model into memory…', 58);
+
+            let device = 'wasm';
+            let dtype = 'fp32';
+
+            if (navigator.gpu) {
+                try {
+                    const adapter = await navigator.gpu.requestAdapter();
+                    if (adapter) {
+                        device = 'webgpu';
+                        _deviceBackend = 'webgpu';
                     }
+                } catch (e) {
+                    console.warn('WebGPU check error:', e);
                 }
-            });
+            }
+
+            if (device === 'wasm') {
+                env.backends = { onnx: { wasm: { numThreads: isMobile ? 1 : 2 } } };
+                _deviceBackend = 'wasm';
+            }
+
+            const backendName = device === 'webgpu' ? 'WebGPU' : 'CPU WASM';
+            onProgress(`Loading AI model (${backendName})…`, 8);
+
+            try {
+                _pipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+                    dtype: dtype,
+                    device: device,
+                    progress_callback: (info) => {
+                        if (info.status === 'downloading') {
+                            const pct = info.total ? (info.loaded / info.total) * 50 + 5 : 20;
+                            onProgress(`Downloading model… ${info.file || ''}`, Math.round(pct));
+                        } else if (info.status === 'loading') {
+                            onProgress(`Loading model into memory (${backendName})…`, 58);
+                        }
+                    }
+                });
+            } catch (err) {
+                if (device === 'webgpu') {
+                    console.warn('WebGPU pipeline failed, retrying with WASM fallback:', err);
+                    env.backends = { onnx: { wasm: { numThreads: isMobile ? 1 : 2 } } };
+                    _deviceBackend = 'wasm';
+                    _pipeline = await pipeline('image-segmentation', 'briaai/RMBG-1.4', {
+                        dtype: 'fp32',
+                        device: 'wasm',
+                        progress_callback: (info) => {
+                            if (info.status === 'downloading') {
+                                const pct = info.total ? (info.loaded / info.total) * 50 + 5 : 20;
+                                onProgress(`Downloading model… ${info.file || ''}`, Math.round(pct));
+                            } else if (info.status === 'loading') {
+                                onProgress('Loading model into memory…', 58);
+                            }
+                        }
+                    });
+                } else {
+                    throw err;
+                }
+            }
             return _pipeline;
         }
 
@@ -1735,7 +1864,8 @@
         const App = {
             items: [],
             activeId: null,
-            isProcessing: false
+            isProcessing: false,
+            quality: 'ultra'
         };
         let _nextItemId = 1;
 
@@ -1808,7 +1938,8 @@
             setProgress(5);
 
             try {
-                const resized = await resizeImageFile(item.file, MAX_DIM);
+                const maxDim = getMaxDimension();
+                const resized = await resizeImageFile(item.file, maxDim);
                 const { mask, maskW, maskH } = await generateMask(resized, (msg, pct) => {
                     item.progress = pct;
                     item.statusText = msg;
@@ -2287,9 +2418,32 @@
             });
         }
 
+        function bindQualityButtons() {
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const mode = e.currentTarget.dataset.quality;
+                    if (mode) setQualityMode(mode);
+                });
+            });
+        }
+
+        function setQualityMode(mode) {
+            App.quality = mode;
+            document.querySelectorAll('.quality-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.quality === mode);
+            });
+            const note = document.getElementById('qualityNote');
+            if (note) {
+                note.textContent = mode === 'ultra'
+                    ? '1024px · Crisp edges · Halo removal'
+                    : 'Fast draft · Lower memory';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             bindDropZone();
             bindActions();
+            bindQualityButtons();
             initBrush(onBrushStroke);
             bindEditorButtons();
         });
