@@ -151,7 +151,7 @@
 
         /* ── Workspace layout ────────────────────────────────── */
         .workspace { width: 100%; max-width: 1360px; display: flex; flex-direction: column; gap: 0; }
-        .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 20px; align-items: stretch; }
+        .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
 
         .panel {
             background: var(--surface); border: 1px solid var(--line);
@@ -342,7 +342,7 @@
         .preview-label span span { font-weight: 400; letter-spacing: 0; }
         .label-swatch { display: none; }
         .preview-img-wrap { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #fbfaf8; }
-        .preview-img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .preview-img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; -webkit-user-drag: none; user-select: none; pointer-events: none; }
         .preview-img-wrap.checkerboard, .batch-card-thumb.checkerboard, .editor-canvas-wrap {
             background-color: #fff;
             background-image: linear-gradient(45deg, var(--checker) 25%, transparent 25%, transparent 75%, var(--checker) 75%),
@@ -586,12 +586,13 @@
                     </div>
 
                     <div class="field" id="qualityStrip">
-                        <div class="field-label"><span>Quality</span><span>1024px</span></div>
+                        <div class="field-label"><span>Quality</span><span id="qualityPx">1024px</span></div>
                         <div class="segmented">
                             <button class="seg quality-btn active" data-quality="ultra" id="qualityUltraBtn" type="button" title="Native 1024px + Edge Anti-aliasing + Halo Removal">Ultra HD</button>
-                            <button class="seg quality-btn" data-quality="fast" id="qualityFastBtn" type="button" title="Fast processing for quick drafts">Fast</button>
+                            <button class="seg quality-btn" data-quality="fast" id="qualityFastBtn" type="button" title="768px, smooth edges">Fast</button>
+                            <button class="seg quality-btn" data-quality="draft" id="qualityDraftBtn" type="button" title="Lowest resolution, quickest preview">Draft</button>
                         </div>
-                        <p class="field-note" id="qualityNote">1024px · Crisp edges · Halo removal</p>
+                        <p class="field-note" id="qualityNote">Crisp edges and halo removal are on for Ultra HD.</p>
                     </div>
 
                     <div class="field">
@@ -1054,7 +1055,7 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
                         </div>
                     </div>
 
-                    <div style="border:2px solid var(--ink); border-radius:8px; padding:1.25rem; background:var(--cream);">
+                    <div style="border:1.5px solid var(--accent); border-radius:16px; padding:1.25rem; background:var(--accent-tint);">
                         <div style="display:flex; justify-content:space-between; align-items:baseline;">
                             <strong style="font-size:1.05rem;">Pro Cloud GPU API</strong>
                             <span style="font-weight:600; font-size:1.1rem; color:var(--ink);">$0.005 / cutout</span>
@@ -1303,7 +1304,9 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
             (navigator.maxTouchPoints > 1 && window.innerWidth <= 768);
 
         function getMaxDimension() {
-            return App.quality === 'fast' ? (isMobile ? 512 : 768) : 1024;
+            if (App.quality === 'draft') return isMobile ? 384 : 512;
+            if (App.quality === 'fast') return isMobile ? 512 : 768;
+            return 1024;
         }
 
         function resizeImageFile(file, maxDim) {
@@ -1326,7 +1329,7 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
 
         // ── Quality: Alpha Matting & Halo Removal ───────────────────────────────────
         function refineMaskEdges(mask, w, h, feather = 0) {
-            if (App.quality === 'fast') return mask;
+            if (App.quality === 'draft') return mask;
             const refined = new Float32Array(mask.length);
             const tuning = document.getElementById('subjectTuning')?.value || 'auto';
             
@@ -2547,12 +2550,14 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
                     } else if (bgType === 'custom' && item.customBgBlob) {
                         const customImg = new Image();
                         const customUrl = URL.createObjectURL(item.customBgBlob);
-                        customImg.onload = () => {
-                            URL.revokeObjectURL(customUrl);
-                            ctx.drawImage(customImg, 0, 0, w, h);
-                        };
-                        customImg.src = customUrl;
-                        await new Promise(r => customImg.onload = r);
+                        await new Promise(r => { customImg.onload = r; customImg.onerror = r; customImg.src = customUrl; });
+                        URL.revokeObjectURL(customUrl);
+                        if (customImg.naturalWidth) {
+                            // cover-fit so the background keeps its aspect ratio
+                            const sc = Math.max(w / customImg.naturalWidth, h / customImg.naturalHeight);
+                            const dw = customImg.naturalWidth * sc, dh = customImg.naturalHeight * sc;
+                            ctx.drawImage(customImg, (w - dw) / 2, (h - dh) / 2, dw, dh);
+                        }
                     }
 
                     // 2. Render Product Shadows
@@ -2602,7 +2607,9 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
 
             // Update output file extension
             const ext = format === 'image/jpeg' ? 'jpg' : (format === 'image/webp' ? 'webp' : 'png');
-            item.outputName = item.name.replace(/\.[^.]+$/, '') + '-no-bg.' + ext;
+            const bgSuffix = { transparent: 'no-bg', color: 'solid-bg', gradient: 'studio-bg', blur: 'blur-bg', custom: 'custom-bg' }[bgType] || 'no-bg';
+            const shadowSuffix = shadow === 'drop' ? '-drop-shadow' : (shadow === 'floor' ? '-floor-shadow' : '');
+            item.outputName = item.name.replace(/\.[^.]+$/, '') + '-' + bgSuffix + shadowSuffix + '.' + ext;
 
             const resultImg = document.getElementById('resultImg');
             const resultWrap = document.getElementById('resultImgWrap');
@@ -2745,8 +2752,8 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
                 const file = e.target.files?.[0];
                 if (file) {
                     customName.textContent = file.name;
-                    const item = App.items.find(i => i.id === App.activeId);
-                    if (item) item.customBgBlob = file;
+                    // Apply to every photo in the batch so "Download all" stays consistent
+                    App.items.forEach(i => { i.customBgBlob = file; });
                     updateExportPreview();
                 }
             });
@@ -2925,10 +2932,14 @@ add_filter('wp_generate_attachment_metadata', function($metadata, $attachment_id
             });
             const note = document.getElementById('qualityNote');
             if (note) {
-                note.textContent = mode === 'ultra'
-                    ? '1024px · Crisp edges · Halo removal'
-                    : 'Fast draft · Lower memory';
+                note.textContent = {
+                    ultra: 'Crisp edges and halo removal are on for Ultra HD.',
+                    fast: 'Balanced speed. Smooth edges, no halo removal.',
+                    draft: 'Quick preview. Lowest resolution, no edge refinement.'
+                }[mode] || '';
             }
+            const px = document.getElementById('qualityPx');
+            if (px) px.textContent = getMaxDimension() + 'px';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
